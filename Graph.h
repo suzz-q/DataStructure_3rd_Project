@@ -13,6 +13,8 @@
 #include <deque>
 #include <queue>
 #include <stack>
+#include <climits>
+#define INF INT_MAX
 
 using namespace std;
 
