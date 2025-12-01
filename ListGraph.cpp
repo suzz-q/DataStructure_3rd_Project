@@ -51,10 +51,10 @@ bool ListGraph::printGraph(ofstream *fout)	//Definition of print Graph
 	*fout << "============PRINT==========\n";
 	for (int i = 0; i < m_Size; i++)
 	{
-		*fout << "[" << i << "] -> ";
+		*fout << "[" << i << "]";
 		for (auto j = m_List[i].begin(); j != m_List[i].end(); j++)
 		{
-			*fout << "(" << j->first << "," << j->second << ")";
+			*fout << " -> (" << j->first << "," << j->second << ")";
 		}
 		*fout << "\n";
 	}
