@@ -359,7 +359,7 @@ bool Kruskal(Graph* graph, ofstream& fout)
 
 			for (iter = link_ver.begin(); iter != link_ver.end(); iter++)
 			{
-				fout << iter->first << "(" << iter->second << ")";
+				fout << iter->first << "(" << iter->second << ") ";
 			}
 			fout << "\n";
 		}
@@ -713,7 +713,14 @@ bool FLOYD(Graph* graph, char option, ofstream& fout)
 	//모든 edge 가져옴
 	for (int i = 0; i < size; i++)
 	{
-		graph->getAdjacentEdges(i, &edge[i]);
+		if (option == 'O')
+		{
+			graph->getAdjacentEdgesDirect(i, &edge[i]);
+		}
+		else
+		{
+			graph->getAdjacentEdges(i, &edge[i]);
+		}
 		for (iter = edge[i].begin(); iter != edge[i].end(); iter++)
 		{
 			int des = iter->first;
@@ -901,25 +908,25 @@ bool Centrality(Graph* graph, ofstream &fout)
 		}
 	}
 
-	//FLOYD 수행
+	
 	for (int k = 0; k < size; k++)
 	{
 		for (int i = 0; i < size; i++)
 		{
-			if (distance[i][k] == INT_MAX)
-			{
-				continue;
-			}
+			if (distance[i][k] == INT_MAX) continue;
 
 			for (int j = 0; j < size; j++)
 			{
-				if (distance[k][j] > distance[i][k] + distance[k][j])
+				if (distance[k][j] == INT_MAX) continue;
+
+				if (distance[i][j] > distance[i][k] + distance[k][j])
 				{
 					distance[i][j] = distance[i][k] + distance[k][j];
 				}
 			}
 		}
 	}
+
 
 	//음수 사이클 검사
 	for (int i = 0; i < size; i++)
