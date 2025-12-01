@@ -62,8 +62,15 @@ bool BFS(Graph* graph, char option, int vertex, ofstream& fout)
 		int v = visit.front();
 		visit.pop();
 		fout << v;
-
-		graph->getAdjacentEdges(v, &edge);
+		if (option == 'O')
+		{
+			graph->getAdjacentEdgesDirect(v, &edge);
+		}
+		else
+		{
+			graph->getAdjacentEdges(v, &edge);
+		}
+		//graph->getAdjacentEdges(v, &edge);
 		for (iter = edge.begin(); iter != edge.end(); iter++)
 		{
 			if (!visitNode[iter->first])
@@ -123,8 +130,14 @@ bool DFS(Graph* graph, char option, int vertex, ofstream& fout)
 		int top = visit.top();
 		visit.pop();
 
-		graph->getAdjacentEdges(top, &edge);
-
+		if (option == 'O')
+		{
+			graph->getAdjacentEdgesDirect(top, &edge);
+		}
+		else
+		{
+			graph->getAdjacentEdges(top, &edge);
+		}
 		if (visitNode[top])
 		{
 			continue;
@@ -554,7 +567,14 @@ bool Bellmanford(Graph* graph, char option, int s_vertex, int e_vertex, ofstream
 
 	for (int i = 0; i < size; i++)
 	{
-		graph->getAdjacentEdges(i, &edge[i]); //i에서 갈 수 있는 모든 edge를 가져옴
+		if (option == 'O')
+		{
+			graph->getAdjacentEdgesDirect(i, &edge[i]);
+		}
+		else
+		{
+			graph->getAdjacentEdges(i, &edge[i]);
+		} //i에서 갈 수 있는 모든 edge를 가져옴
 		for (iter = edge[i].begin(); iter != edge[i].end(); iter++)
 		{
 			int destination = iter->first;
