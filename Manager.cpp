@@ -6,34 +6,34 @@
 #include <string>
 #include <sstream>
 
-Manager::Manager()	
+Manager::Manager()
 {
-	graph = nullptr;	
+	graph = nullptr;
 	fout.open("log.txt", ios::trunc);
-	load = 0;	//Anything is not loaded
+	load = 0;	// nothing loaded yet
 }
 
 Manager::~Manager()
 {
-	if(load)	//if graph is loaded, delete graph
-		delete graph;	
-	if(fout.is_open())	//if fout is opened, close file
-		fout.close();	//close log.txt File
+	if (load)	// if graph was loaded, delete it
+		delete graph;
+	if (fout.is_open())	// if fout is open
+		fout.close();	// close log.txt
 }
 
-void Manager::run(const char* command_txt){
-	ifstream fin;	//Command File Input File Stream
-	fin.open(command_txt, ios_base::in);//File open with read mode
-		
-	if(!fin) { //If command File cannot be read, Print error
-		fout<<"command file open error"<<endl;
-		return;	//Return
+void Manager::run(const char* command_txt) {
+	ifstream fin;	// command file input stream
+	fin.open(command_txt, ios_base::in); // open file with read mode
+
+	if (!fin) { // if command file cannot be opened
+		fout << "command file open error" << endl;
+		return;
 	}
-	
+
 	string line;
-	char dir = { 0 };	//방향성이 있는지 없는지 
-	int start = -1;	//시작 정점 번호
-	int end= - 1;
+	char dir = { 0 };	// graph direction option
+	int start = -1;	// start vertex number
+	int end = -1;
 
 	while (getline(fin, line))
 	{
@@ -49,10 +49,11 @@ void Manager::run(const char* command_txt){
 
 		if (cmd == "LOAD")
 		{
-			string filename;
+			string filename, ex;
 			ss >> filename;
 
-			if (filename.empty())
+			// missing or extra arguments
+			if (filename.empty() || ss >> ex)
 			{
 				printErrorCode(100);
 				continue;
@@ -67,10 +68,16 @@ void Manager::run(const char* command_txt){
 			{
 				printErrorCode(100);
 			}
-			
+
 		}
 		else if (cmd == "PRINT")
 		{
+			string ex;
+			if (ss >> ex)
+			{
+				printErrorCode(200);
+				continue;
+			}
 			if (!PRINT())
 			{
 				printErrorCode(200);
@@ -78,8 +85,18 @@ void Manager::run(const char* command_txt){
 		}
 		else if (cmd == "BFS")
 		{
-			ss >> dir >> start;
-			if (dir != 'O'&& dir !='X')
+			if (!(ss >> dir >> start))
+			{
+				printErrorCode(300);
+				continue;
+			}
+			string ex;
+			if (ss >> ex)
+			{
+				printErrorCode(300);
+				continue;
+			}
+			if (dir != 'O' && dir != 'X')
 			{
 				printErrorCode(300);
 				continue;
@@ -98,7 +115,30 @@ void Manager::run(const char* command_txt){
 		}
 		else if (cmd == "DFS")
 		{
-			ss >> dir >> start;
+			if (!(ss >> dir >> start))
+			{
+				printErrorCode(400);
+				continue;
+			}
+			string ex;
+			if (ss >> ex)
+			{
+				printErrorCode(400);
+				continue;
+			}
+
+			if (dir != 'O' && dir != 'X')
+			{
+				printErrorCode(300);
+				continue;
+			}
+
+			if (start < 0)
+			{
+				printErrorCode(300);
+				continue;
+			}
+
 			if (!mDFS(dir, start))
 			{
 				printErrorCode(400);
@@ -106,6 +146,12 @@ void Manager::run(const char* command_txt){
 		}
 		else if (cmd == "KRUSKAL")
 		{
+			string ex;
+			if (ss >> ex)
+			{
+				printErrorCode(500);
+				continue;
+			}
 			if (!mKRUSKAL())
 			{
 				printErrorCode(500);
@@ -113,7 +159,15 @@ void Manager::run(const char* command_txt){
 		}
 		else if (cmd == "DIJKSTRA")
 		{
-			ss >> dir >> start;
+			if (!(ss >> dir >> start)) {
+				printErrorCode(600);
+				continue;
+			}
+			string ex;
+			if (ss >> ex) {
+				printErrorCode(600);
+				continue;
+			}
 
 			if (!mDIJKSTRA(dir, start))
 			{
@@ -122,7 +176,16 @@ void Manager::run(const char* command_txt){
 		}
 		else if (cmd == "BELLMANFORD")
 		{
-			ss >> dir >> start >> end;
+			if (!(ss >> dir >> start >> end)) {
+				printErrorCode(700);
+				continue;
+			}
+			string ex;
+			if (ss >> ex) {
+				printErrorCode(700);
+				continue;
+			}
+
 			if (!mBELLMANFORD(dir, start, end))
 			{
 				printErrorCode(700);
@@ -130,7 +193,16 @@ void Manager::run(const char* command_txt){
 		}
 		else if (cmd == "FLOYD")
 		{
-			ss >> dir;
+			if (!(ss >> dir)) {
+				printErrorCode(800);
+				continue;
+			}
+			string ex;
+			if (ss >> ex) {
+				printErrorCode(800);
+				continue;
+			}
+
 			if (!mFLOYD(dir))
 			{
 				printErrorCode(800);
@@ -138,6 +210,12 @@ void Manager::run(const char* command_txt){
 		}
 		else if (cmd == "CENTRALITY")
 		{
+			string ex;
+			if (ss >> ex) {
+				printErrorCode(900);
+				continue;
+			}
+
 			if (!mCentrality())
 			{
 				printErrorCode(900);
@@ -153,8 +231,6 @@ void Manager::run(const char* command_txt){
 			load = 1;
 			return;
 		}
-
-
 	}
 	fin.close();
 	return;
@@ -162,15 +238,16 @@ void Manager::run(const char* command_txt){
 
 bool Manager::LOAD(const char* filename)
 {
-	// If graph information already exists
-	if (graph != nullptr) 
-	{ 
+	// delete existing graph if it exists
+	if (graph != nullptr)
+	{
 		delete graph;
 	}
-	
+
 	ifstream fdata;
 	fdata.open(filename);
-	//텍스트 파일이 존재하지 않을 경우 에러코드 출력
+
+	// file does not exist
 	if (!fdata.is_open())
 	{
 		printErrorCode(100);
@@ -181,29 +258,29 @@ bool Manager::LOAD(const char* filename)
 
 	if (strcmp(filename, "graph_L.txt") == 0)
 	{
-		int vertexs = -1; //vertex의 개수(두 번째 줄의 값)
+		int vertexs = -1; // number of vertices
 
 		int start_vertex = -1;
 		int end_vertex = -1;
 		int weight = -1;
 
-		//종류 확인(L)
+		// type check (L)
 		getline(fdata, temp);
 		if (temp != "L")
 		{
 			return false;
 		}
 
-		//정점 개수 입력 받기
+		// read number of vertices
 		getline(fdata, temp);
 		if (!temp.empty())
 		{
 			vertexs = stoi(temp);
 		}
 
-		//그래프 객체 생성
+		// create graph
 		graph = new ListGraph(false, vertexs);
-		int index = -1; //vertex index
+		int index = -1; // vertex index
 
 		while (getline(fdata, temp))
 		{
@@ -212,21 +289,20 @@ bool Manager::LOAD(const char* filename)
 				break;
 			}
 
-			//공백이 없는 줄=정점 번호만 적힌 줄=출발 정점
+			// no space = only vertex number = starting vertex
 			if (temp.find(" ") == string::npos)
 			{
 				if (!temp.empty())
 				{
 					start_vertex = stoi(temp);
-					//입력 파일의 정점 번호가 연속 증가(i = 0부터 시작)하지 않으면 잘못된 파일
-					if (index + 1 != start_vertex)
+
+					// vertex order check
+					if (start_vertex != index + 1 && index != -1)
 					{
-						graph = nullptr;
-						delete graph; // Delete graph information
-						return false; // Output error code
+						return false;
 					}
 				}
-				index++;
+				index = start_vertex;
 			}
 			else
 			{
@@ -240,7 +316,7 @@ bool Manager::LOAD(const char* filename)
 	{
 		int end_vertex = -1;
 		int vertexs = 0;
-		int weight=-1;
+		int weight = -1;
 
 		getline(fdata, temp);
 		if (temp != "M")
@@ -248,7 +324,7 @@ bool Manager::LOAD(const char* filename)
 			return false;
 		}
 
-		//정점 개수 입력 받기 
+		// read number of vertices
 		getline(fdata, temp);
 		if (!temp.empty())
 		{
@@ -263,36 +339,33 @@ bool Manager::LOAD(const char* filename)
 				graph->insertEdge(i, j, weight);
 			}
 		}
-
-
 	}
-	else //어차피 위에서 걸리니까 굳이? 싶지만?
+	else
 	{
 		return false;
 	}
-	
+
 	return true;
 }
 
-bool Manager::PRINT()	
+bool Manager::PRINT()
 {
-	//저장된 그래프가 없는 경우 에러코드 출력
+	// no stored graph
 	if (!graph)
 	{
 		return false;
 	}
 
-	
 	if (!graph->printGraph(&fout))
 	{
 		return false;
 	}
 	return true;
-	
 }
 
-bool Manager::mBFS(char option, int vertex)	
+bool Manager::mBFS(char option, int vertex)
 {
+	// empty graph
 	if (graph == nullptr)
 	{
 		return false;
@@ -301,7 +374,7 @@ bool Manager::mBFS(char option, int vertex)
 	return BFS(graph, option, vertex, fout);
 }
 
-bool Manager::mDFS(char option, int vertex)	
+bool Manager::mDFS(char option, int vertex)
 {
 	if (graph == nullptr)
 	{
@@ -311,7 +384,7 @@ bool Manager::mDFS(char option, int vertex)
 	return DFS(graph, option, vertex, fout);
 }
 
-bool Manager::mDIJKSTRA(char option, int vertex)	
+bool Manager::mDIJKSTRA(char option, int vertex)
 {
 	if (graph == nullptr)
 	{
@@ -331,7 +404,7 @@ bool Manager::mKRUSKAL()
 	return Kruskal(graph, fout);
 }
 
-bool Manager::mBELLMANFORD(char option, int s_vertex, int e_vertex) 
+bool Manager::mBELLMANFORD(char option, int s_vertex, int e_vertex)
 {
 	if (graph == nullptr)
 	{
@@ -351,7 +424,7 @@ bool Manager::mFLOYD(char option)
 	return FLOYD(graph, option, fout);
 }
 
-bool Manager::mCentrality() 
+bool Manager::mCentrality()
 {
 	if (graph == nullptr)
 	{
@@ -363,8 +436,7 @@ bool Manager::mCentrality()
 
 void Manager::printErrorCode(int n)
 {
-	fout<<"========ERROR======="<<endl;
-	fout<<n<<endl;
-	fout<<"===================="<<endl << endl;
+	fout << "========ERROR=======" << endl;
+	fout << n << endl;
+	fout << "====================" << endl << endl;
 }
-
